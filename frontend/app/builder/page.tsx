@@ -7,7 +7,7 @@ import Steps from "@/components/Steps/Steps";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { toast } from "@/hooks/use-toast";
-import useWebcontainer from "@/hooks/useWebcontainer";
+// import useWebcontainer from "@/hooks/useWebcontainer";
 import { parseXmlToSteps } from "@/lib/utils";
 import { useMyContext } from "@/Providers";
 import axios from "axios";
@@ -72,7 +72,7 @@ export default function Home() {
     const [steps, setSteps] = useState<IStep[]>([]);
     const [openTabs, setOpenTabs] = useState<Array<{id:string, title:string}>>([])
     const [activeTab, setActiveTab] = useState<string>("package.json");
-    const webcontainer = useWebcontainer();
+    // const webcontainer = useWebcontainer();
     const [fileContents, setFileContents] = useState<string>("")
     const [files, setFiles] = useState<IFileStructure[]>([]);
 
@@ -164,8 +164,8 @@ export default function Home() {
             return result;
         };
         const mountableStructure = transform(files);
-        await webcontainer?.mount(mountableStructure);
-        console.log(webcontainer)
+        // await webcontainer?.mount(mountableStructure);
+        console.log(mountableStructure)
         
     }
     useEffect(() => {
