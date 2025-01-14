@@ -28,8 +28,10 @@ const prompts_1 = require("./prompts");
 const node_1 = require("./defaults/node");
 const react_1 = require("./defaults/react");
 const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
+app.use((0, cors_1.default)());
 const MY_GROQ_API_KEY = process.env.GROQ_AI_KEY;
 const groq = new groq_sdk_1.default({ apiKey: MY_GROQ_API_KEY });
 function fetchTemplate(req, res) {
@@ -48,24 +50,27 @@ function fetchTemplate(req, res) {
             ],
             model: "llama-3.3-70b-versatile",
             temperature: 0,
-            max_tokens: 1024,
+            max_tokens: 8192,
             // stream:true // Streaming of incoming data which is not in json format for now
         });
         console.log("RESP", template_resp);
         const answer = template_resp.choices[0].message.content;
-        if (answer === "react") {
+        if ((answer === null || answer === void 0 ? void 0 : answer.toLowerCase()) === "react") {
             return res.json({
                 prompts: [prompts_1.BASE_PROMPT, `Here is an artifact that contains all files of the project visible to you.\nConsider the contents of ALL files in the project.\n\n${react_1.basePrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`],
-                uiPrompts: [react_1.basePrompt]
+                userPromps: [react_1.basePrompt]
             });
         }
-        if (answer === "node") {
+        if ((answer === null || answer === void 0 ? void 0 : answer.toLowerCase()) === "node") {
             return res.json({
                 prompts: [`Here is an artifact that contains all files of the project visible to you.\nConsider the contents of ALL files in the project.\n\n${node_1.basePrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`],
-                uiPrompts: [node_1.basePrompt]
+                userPrompts: [node_1.basePrompt]
             });
         }
-        return res.status(403).json({ message: "Error! Rephrase your prompt! currently we support only react and node js code base" });
+        return res.json({
+            prompts: [prompts_1.BASE_PROMPT, `Here is an artifact that contains all files of the project visible to you.\nConsider the contents of ALL files in the project.\n\n${react_1.basePrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`],
+            userPromps: [react_1.basePrompt]
+        });
     });
 }
 app.post("/api/template", fetchTemplate);
@@ -83,8 +88,8 @@ function chatEndpoint(req, res) {
             ],
             model: "llama-3.3-70b-versatile",
             // response_format: { type: "json_object" },
-            temperature: 0.5,
-            max_tokens: 1024,
+            temperature: 0,
+            max_tokens: 8192,
             // stream:true // Streaming of incoming data which is not in json format for now
         });
         console.log("RESPONSE", response.choices[0].message.content);
@@ -130,7 +135,7 @@ function getGroqChatCompletion() {
             ],
             model: "llama-3.3-70b-versatile",
             // response_format: { type: "json_object" },
-            temperature: 0.5,
+            temperature: 1,
             max_tokens: 6270,
             stream: true // Streaming of incoming data which is not in json format for now
         });

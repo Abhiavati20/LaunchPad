@@ -5,9 +5,11 @@ import { BASE_PROMPT, getSystemPrompt } from "./prompts";
 import { basePrompt as NodePrompt } from "./defaults/node";
 import { basePrompt as ReactPrompt } from "./defaults/react";
 import express from "express";
-
+import cors from "cors"
 const app = express();
 app.use(express.json())
+
+app.use(cors())
 const MY_GROQ_API_KEY=process.env.GROQ_AI_KEY
 const groq = new Groq({ apiKey: MY_GROQ_API_KEY });
 
@@ -26,24 +28,27 @@ async function fetchTemplate(req:any, res:any) {
         ],
         model: "llama-3.3-70b-versatile",
         temperature: 0,
-        max_tokens: 1024,
+        max_tokens: 8192,
         // stream:true // Streaming of incoming data which is not in json format for now
     });
     console.log("RESP", template_resp);
     const answer = template_resp.choices[0].message.content
-    if (answer === "react") {
+    if (answer?.toLowerCase() === "react") {
         return res.json({
             prompts: [BASE_PROMPT, `Here is an artifact that contains all files of the project visible to you.\nConsider the contents of ALL files in the project.\n\n${ReactPrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`],
-            uiPrompts:[ReactPrompt]
+            userPromps:[ReactPrompt]
         })
     }
-    if (answer === "node") {
+    if (answer?.toLowerCase() === "node") {
         return res.json({
             prompts: [`Here is an artifact that contains all files of the project visible to you.\nConsider the contents of ALL files in the project.\n\n${NodePrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`],
-            uiPrompts: [NodePrompt]
+            userPrompts: [NodePrompt]
         })
     }
-    return res.status(403).json({message:"Error! Rephrase your prompt! currently we support only react and node js code base"})
+    return res.json({
+            prompts: [BASE_PROMPT, `Here is an artifact that contains all files of the project visible to you.\nConsider the contents of ALL files in the project.\n\n${ReactPrompt}\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`],
+            userPromps:[ReactPrompt]
+        })
 }
 app.post("/api/template", fetchTemplate)
 
@@ -60,8 +65,8 @@ async function chatEndpoint(req:any, res:any) {
         ],
         model: "llama-3.3-70b-versatile",
         // response_format: { type: "json_object" },
-        temperature: 0.5,
-        max_tokens:1024,
+        temperature: 0,
+        max_tokens:8192,
         // stream:true // Streaming of incoming data which is not in json format for now
     });
     console.log("RESPONSE", response.choices[0].message.content)
@@ -93,7 +98,7 @@ export async function getGroqChatCompletion() {
         ],
         model: "llama-3.3-70b-versatile",
         // response_format: { type: "json_object" },
-        temperature: 0.5,
+        temperature: 1,
         max_tokens:6270,
         stream:true // Streaming of incoming data which is not in json format for now
     });
